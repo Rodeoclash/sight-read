@@ -1,0 +1,7 @@
+{
+	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"cspell": "^8.15.4",
+		"lefthook": "^1.7.22"
+	}
+}

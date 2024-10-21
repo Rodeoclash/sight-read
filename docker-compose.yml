@@ -1,0 +1,17 @@
+services:
+  frontend:
+    image: frontend
+    build:
+      context: ./frontend
+    dns:
+      - 8.8.8.8
+    ports:
+      - 5173:5173
+    user: "1000"
+    volumes:
+      - ./frontend:/usr/src/app
+      - ./passwd:/etc/passwd
+      - home-server:/home/server
+
+volumes:
+  home-server:
