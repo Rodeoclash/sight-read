@@ -1,11 +1,12 @@
 import React from "react";
 import { Vex } from "vexflow";
+import { WebMidi } from "webmidi";
+
+import MidiInputs from "@/components/MidiInputs";
 
 import "./index.css";
 
 import styles from "./App.module.css";
-
-console.log(styles);
 
 const { Factory } = Vex.Flow;
 
@@ -34,9 +35,24 @@ const width = lessonItems.length * 75;
 function App() {
 	const el = React.useRef<HTMLDivElement | null>(null);
 	const vf = React.useRef<InstanceType<typeof Factory> | null>(null);
+	const [midiEnabled, setMidiEnabled] = React.useState<boolean | null>(null);
 
+	// Web midi
 	React.useEffect(() => {
-		if (el.current === null || vf.current !== null) {
+		(async () => {
+			try {
+				await WebMidi.enable();
+				setMidiEnabled(true);
+			} catch (err) {
+				alert(err);
+				setMidiEnabled(false);
+			}
+		})();
+	}, []);
+
+	// Vexflow
+	React.useEffect(() => {
+		if (el.current === null || vf.current !== null || !midiEnabled) {
 			return;
 		}
 
@@ -62,14 +78,8 @@ function App() {
 			const note = notes[index];
 
 			note.setStyle({
-				fillStyle:
-					lessonItem.played === false
-						? "rgba(0, 0, 0, 1)"
-						: "rgba(0, 0, 0, 0.5)",
-				strokeStyle:
-					lessonItem.played === false
-						? "rgba(0, 0, 0, 1)"
-						: "rgba(0, 0, 0, 0.5)",
+				fillStyle: lessonItem.played === false ? "#000" : "#666",
+				strokeStyle: lessonItem.played === false ? "#000" : "#666",
 			});
 		}
 
@@ -81,10 +91,19 @@ function App() {
 			.addTimeSignature("4/4");
 
 		vf.current.draw();
-	}, []);
+	}, [midiEnabled]);
+
+	if (midiEnabled === null) {
+		return <p>Determine if midi enabled</p>;
+	}
+
+	if (midiEnabled === false) {
+		return <p>Midi not enabled</p>;
+	}
 
 	return (
 		<>
+			<MidiInputs />
 			<div ref={el} className={styles.card} />
 		</>
 	);
