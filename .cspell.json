@@ -1,5 +1,13 @@
 {
 	"version": "0.2",
 	"language": "en",
-	"words": ["biomejs", "lefthook", "mkdirp", "vexflow"]
+	"words": [
+		"biomejs",
+		"lefthook",
+		"mkdirp",
+		"noteon",
+		"valtio",
+		"vexflow",
+		"webmidi"
+	]
 }

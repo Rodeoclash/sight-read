@@ -1,4 +1,6 @@
+import state, { playNote } from "@/services/state";
 import React from "react";
+import { subscribe, useSnapshot } from "valtio";
 import { Vex } from "vexflow";
 import { WebMidi } from "webmidi";
 
@@ -10,34 +12,14 @@ import styles from "./App.module.css";
 
 const { Factory } = Vex.Flow;
 
-// Need a way of generating these
-const lessonItems = [
-	{
-		value: "C#5/q",
-		played: true,
-	},
-	{
-		value: "B4/q",
-		played: true,
-	},
-	{
-		value: "A4/q",
-		played: false,
-	},
-	{
-		value: "G#4/q",
-		played: false,
-	},
-];
-
-const width = lessonItems.length * 75;
-
 function App() {
 	const el = React.useRef<HTMLDivElement | null>(null);
 	const vf = React.useRef<InstanceType<typeof Factory> | null>(null);
 	const [midiEnabled, setMidiEnabled] = React.useState<boolean | null>(null);
+	const snap = useSnapshot(state);
+	const width = snap.lesson.length * 75;
 
-	// Web midi
+	// Web midi detection
 	React.useEffect(() => {
 		(async () => {
 			try {
@@ -50,7 +32,81 @@ function App() {
 		})();
 	}, []);
 
-	// Vexflow
+	// Web midi listener
+	React.useEffect(() => {
+		if (!snap.selectedInputId) {
+			return;
+		}
+
+		const selectedInput = WebMidi.inputs.find((input) => {
+			return input.id === snap.selectedInputId;
+		});
+
+		if (!selectedInput) {
+			return;
+		}
+
+		selectedInput.addListener(
+			"noteon",
+			(event) => {
+				playNote(event);
+			},
+			{ channels: [1] },
+		);
+	}, [snap.selectedInputId]);
+
+	// Vexflow render
+	React.useEffect(
+		() =>
+			subscribe(state.lesson, () => {
+				console.log("lesson changed", state.lesson);
+
+				if (el.current === null || vf.current === null || !midiEnabled) {
+					return;
+				}
+
+				el.current.innerHTML = "";
+
+				vf.current = new Factory({
+					// @ts-expect-error: We can pass an element here
+					renderer: { elementId: el.current, width: width, height: 140 },
+				});
+
+				const score = vf.current.EasyScore();
+				const system = vf.current.System({
+					width: width, // Increased width to spread notes out more
+				});
+
+				const notesToRender = snap.lesson
+					.map((lessonItem) => `${lessonItem.value}/${lessonItem.duration}`)
+					.join(",");
+
+				const notes = score.notes(notesToRender);
+
+				for (const [index, lessonItem] of snap.lesson.entries()) {
+					const note = notes[index];
+
+					console.log(lessonItem);
+
+					note.setStyle({
+						fillStyle: lessonItem.played === false ? "#000" : "#666",
+						strokeStyle: lessonItem.played === false ? "#000" : "#666",
+					});
+				}
+
+				system
+					.addStave({
+						voices: [score.voice(notes)],
+					})
+					.addClef("treble")
+					.addTimeSignature("4/4");
+
+				vf.current.draw();
+			}),
+		[width, snap.lesson, midiEnabled],
+	);
+
+	// Vexflow boot
 	React.useEffect(() => {
 		if (el.current === null || vf.current !== null || !midiEnabled) {
 			return;
@@ -68,13 +124,13 @@ function App() {
 			width: width, // Increased width to spread notes out more
 		});
 
-		const notesToRender = lessonItems
-			.map((lessonItem) => lessonItem.value)
+		const notesToRender = snap.lesson
+			.map((lessonItem) => `${lessonItem.value}/${lessonItem.duration}`)
 			.join(",");
 
 		const notes = score.notes(notesToRender);
 
-		for (const [index, lessonItem] of lessonItems.entries()) {
+		for (const [index, lessonItem] of snap.lesson.entries()) {
 			const note = notes[index];
 
 			note.setStyle({
@@ -91,7 +147,7 @@ function App() {
 			.addTimeSignature("4/4");
 
 		vf.current.draw();
-	}, [midiEnabled]);
+	}, [midiEnabled, snap.lesson, width]);
 
 	if (midiEnabled === null) {
 		return <p>Determine if midi enabled</p>;
