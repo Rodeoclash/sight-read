@@ -2,3 +2,14 @@
   background: #fff;
   box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
 }
+
+.settings {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  border: 1px solid #ccc;
+  box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+  padding: 1rem;
+  z-index: 2;
+  background: #fff;
+}

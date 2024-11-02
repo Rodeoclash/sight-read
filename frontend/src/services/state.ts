@@ -1,67 +1,36 @@
 import { proxy } from "valtio";
-import type { Input, NoteMessageEvent } from "webmidi";
+import type { Input, Note, NoteMessageEvent } from "webmidi";
+import { generateRandomLesson } from "./lessons";
 
 type LessonItem = {
 	duration: "q";
-	played: boolean;
 	value: string;
 };
 
+export type Lesson = Array<LessonItem>;
+export type InputNotes = Array<Note>;
+
 const state = proxy<{
-	lesson: Array<LessonItem>;
+	inputNotes: InputNotes;
+	lesson: Lesson;
 	selectedInputId: null | string;
 }>({
-	// Need a way of generating these
-	lesson: [
-		{
-			duration: "q",
-			played: false,
-			value: "C#5",
-		},
-		{
-			duration: "q",
-			played: false,
-			value: "B4",
-		},
-		{
-			duration: "q",
-			played: false,
-			value: "A4",
-		},
-		{
-			duration: "q",
-			played: false,
-			value: "G#4",
-		},
-	],
+	inputNotes: [],
+	lesson: generateRandomLesson(),
 	selectedInputId: null,
 });
 
-export function setSelectedInput(input: Input): undefined {
+export function setSelectedInput(input: Input): void {
 	state.selectedInputId = input.id;
 }
 
-export function playNote(event: NoteMessageEvent): undefined {
-	const note = event.note;
+export function storeNote(event: NoteMessageEvent): void {
+	state.inputNotes.push(event.note);
+}
 
-	const lessonNote = (() => {
-		if (note.accidental) {
-			return `${note.name}${note.octave}${note.accidental}`;
-		}
-
-		return `${note.name}${note.octave}`;
-	})();
-
-	for (const [index, lessonItem] of state.lesson.entries()) {
-		if (lessonItem.value === lessonNote) {
-			console.log("=== match");
-		}
-
-		state.lesson[index] = {
-			...lessonItem,
-			played: lessonItem.value === lessonNote || lessonItem.played,
-		};
-	}
+export function nextLesson(): void {
+	state.inputNotes = [];
+	state.lesson = generateRandomLesson();
 }
 
 export default state;

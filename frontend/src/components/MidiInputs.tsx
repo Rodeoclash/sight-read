@@ -1,6 +1,5 @@
 import MidiInput from "@/components/MidiInput";
-import state, { setSelectedInput } from "@/services/state";
-import React from "react";
+import state from "@/services/state";
 import { useSnapshot } from "valtio";
 import { WebMidi } from "webmidi";
 
@@ -14,13 +13,6 @@ function MidiInputs() {
 	const selectedInput = WebMidi.inputs.find((input) => {
 		return input.id === snap.selectedInputId;
 	});
-
-	// Set first midi input as default
-	React.useEffect(() => {
-		if (!selectedInput && WebMidi.inputs.length > 0) {
-			setSelectedInput(WebMidi.inputs[0]);
-		}
-	}, [selectedInput]);
 
 	return (
 		<div>

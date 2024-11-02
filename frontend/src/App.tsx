@@ -1,29 +1,43 @@
-import state, { playNote } from "@/services/state";
+import { buildSampler, playNote } from "@/services/audio";
+import state, { storeNote, setSelectedInput } from "@/services/state";
+import { Cog6ToothIcon } from "@heroicons/react/24/solid";
 import React from "react";
 import { subscribe, useSnapshot } from "valtio";
-import { Vex } from "vexflow";
 import { WebMidi } from "webmidi";
+import { render } from "./services/stave";
 
 import MidiInputs from "@/components/MidiInputs";
 
 import "./index.css";
 
+import type * as Tone from "tone";
 import styles from "./App.module.css";
-
-const { Factory } = Vex.Flow;
 
 function App() {
 	const el = React.useRef<HTMLDivElement | null>(null);
-	const vf = React.useRef<InstanceType<typeof Factory> | null>(null);
+	const [startInteraction, setStartInteraction] =
+		React.useState<boolean>(false);
 	const [midiEnabled, setMidiEnabled] = React.useState<boolean | null>(null);
+	const [showSettings, setShowSettings] = React.useState<boolean>(false);
+	const [sampler, setSampler] = React.useState<Tone.Sampler | null>(null);
 	const snap = useSnapshot(state);
-	const width = snap.lesson.length * 75;
+
+	function handleToggleSettings() {
+		setShowSettings(!showSettings);
+	}
+
+	async function handleStartInteraction() {
+		setStartInteraction(true);
+		const sampler = await buildSampler();
+		setSampler(sampler);
+	}
 
 	// Web midi detection
 	React.useEffect(() => {
 		(async () => {
 			try {
 				await WebMidi.enable();
+				setSelectedInput(WebMidi.inputs[0]); // default to first midi device
 				setMidiEnabled(true);
 			} catch (err) {
 				alert(err);
@@ -34,7 +48,7 @@ function App() {
 
 	// Web midi listener
 	React.useEffect(() => {
-		if (!snap.selectedInputId) {
+		if (!snap.selectedInputId || sampler === null) {
 			return;
 		}
 
@@ -49,105 +63,34 @@ function App() {
 		selectedInput.addListener(
 			"noteon",
 			(event) => {
-				playNote(event);
+				storeNote(event);
+				playNote(sampler, event);
 			},
 			{ channels: [1] },
 		);
-	}, [snap.selectedInputId]);
-
-	// Vexflow render
-	React.useEffect(
-		() =>
-			subscribe(state.lesson, () => {
-				console.log("lesson changed", state.lesson);
-
-				if (el.current === null || vf.current === null || !midiEnabled) {
-					return;
-				}
-
-				el.current.innerHTML = "";
-
-				vf.current = new Factory({
-					// @ts-expect-error: We can pass an element here
-					renderer: { elementId: el.current, width: width, height: 140 },
-				});
-
-				const score = vf.current.EasyScore();
-				const system = vf.current.System({
-					width: width, // Increased width to spread notes out more
-				});
-
-				const notesToRender = snap.lesson
-					.map((lessonItem) => `${lessonItem.value}/${lessonItem.duration}`)
-					.join(",");
-
-				const notes = score.notes(notesToRender);
-
-				for (const [index, lessonItem] of snap.lesson.entries()) {
-					const note = notes[index];
-
-					console.log(lessonItem);
-
-					note.setStyle({
-						fillStyle: lessonItem.played === false ? "#000" : "#666",
-						strokeStyle: lessonItem.played === false ? "#000" : "#666",
-					});
-				}
-
-				system
-					.addStave({
-						voices: [score.voice(notes)],
-					})
-					.addClef("treble")
-					.addTimeSignature("4/4");
-
-				vf.current.draw();
-			}),
-		[width, snap.lesson, midiEnabled],
-	);
+	}, [snap.selectedInputId, sampler]);
 
 	// Vexflow boot
 	React.useEffect(() => {
-		if (el.current === null || vf.current !== null || !midiEnabled) {
+		if (el.current === null || startInteraction === false) {
 			return;
 		}
 
-		el.current.style.width = `${width + 10}px`;
+		render(el.current, snap);
+	}, [snap, startInteraction]);
 
-		vf.current = new Factory({
-			// @ts-expect-error: We can pass an element here
-			renderer: { elementId: el.current, width: width, height: 140 },
-		});
+	// Vexflow update
+	React.useEffect(
+		() =>
+			subscribe(state.lesson, () => {
+				if (el.current === null) {
+					return;
+				}
 
-		const score = vf.current.EasyScore();
-		const system = vf.current.System({
-			width: width, // Increased width to spread notes out more
-		});
-
-		const notesToRender = snap.lesson
-			.map((lessonItem) => `${lessonItem.value}/${lessonItem.duration}`)
-			.join(",");
-
-		const notes = score.notes(notesToRender);
-
-		for (const [index, lessonItem] of snap.lesson.entries()) {
-			const note = notes[index];
-
-			note.setStyle({
-				fillStyle: lessonItem.played === false ? "#000" : "#666",
-				strokeStyle: lessonItem.played === false ? "#000" : "#666",
-			});
-		}
-
-		system
-			.addStave({
-				voices: [score.voice(notes)],
-			})
-			.addClef("treble")
-			.addTimeSignature("4/4");
-
-		vf.current.draw();
-	}, [midiEnabled, snap.lesson, width]);
+				render(el.current, snap);
+			}),
+		[snap],
+	);
 
 	if (midiEnabled === null) {
 		return <p>Determine if midi enabled</p>;
@@ -157,9 +100,20 @@ function App() {
 		return <p>Midi not enabled</p>;
 	}
 
+	if (startInteraction === false) {
+		return (
+			<p>
+				<input onClick={handleStartInteraction} type="button" value="Start" />
+			</p>
+		);
+	}
+
 	return (
 		<>
-			<MidiInputs />
+			<div className={styles.settings}>
+				<Cog6ToothIcon width={24} onClick={handleToggleSettings} />
+				{showSettings === true && <MidiInputs />}
+			</div>
 			<div ref={el} className={styles.card} />
 		</>
 	);

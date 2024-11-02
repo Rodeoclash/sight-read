@@ -12,7 +12,14 @@ function MidiInput({ input }: Props) {
 
 	return (
 		<>
-			<p onClick={(_event) => handleClick(input)}>Midi: {input.name}</p>
+			<p>
+				<input
+					type="button"
+					onClick={(_event) => handleClick(input)}
+					value="Select"
+				/>{" "}
+				Midi: {input.name}
+			</p>
 		</>
 	);
 }
