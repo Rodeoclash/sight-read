@@ -1,30 +1,74 @@
-import MidiInput from "@/components/MidiInput";
-import state from "@/services/state";
+import state, {
+	setSelectedMidiInputId,
+	setSelectedMidiInputChannel,
+} from "@/services/state";
 import { useSnapshot } from "valtio";
 import { WebMidi } from "webmidi";
 
 function MidiInputs() {
 	const snap = useSnapshot(state);
 
-	const inputs = WebMidi.inputs.map((input) => {
-		return <MidiInput key={input.name} input={input} />;
+	const deviceOptions = WebMidi.inputs.map((input) => {
+		return (
+			<option key={input.id} value={input.id}>
+				{input.name}
+			</option>
+		);
 	});
 
-	const selectedInput = WebMidi.inputs.find((input) => {
-		return input.id === snap.selectedInputId;
+	const channelOptions = [...Array(16).keys()].map((n) => {
+		const channel = n + 1;
+
+		return (
+			<option key={channel} value={channel}>
+				{channel}
+			</option>
+		);
 	});
+
+	const handleDeviceOptionChange = (
+		event: React.ChangeEvent<HTMLSelectElement>,
+	) => {
+		setSelectedMidiInputId(event.target.value);
+	};
+
+	const handleDeviceChannelChange = (
+		event: React.ChangeEvent<HTMLSelectElement>,
+	) => {
+		setSelectedMidiInputChannel(event.target.value);
+	};
+
+	if (deviceOptions.length === 0) {
+		return <p>No available midi inputs found</p>;
+	}
+
+	if (!snap.selectedMidiInputId) {
+		throw new Error("Expected midi input to be selected");
+	}
 
 	return (
-		<div>
-			<h1>Available midi inputs</h1>
-			{inputs}
-			{selectedInput && (
-				<>
-					<h1>Selected midi input</h1>
-					<p>{selectedInput.name}</p>
-				</>
-			)}
-		</div>
+		<>
+			<div>
+				<label htmlFor="selectedMidiInputId">Input device</label>
+				<select
+					id="selectedMidiInputId"
+					value={snap.selectedMidiInputId}
+					onChange={handleDeviceOptionChange}
+				>
+					{deviceOptions}
+				</select>
+			</div>
+			<div>
+				<label htmlFor="selectedMidiInputChannel">Channel</label>
+				<select
+					id="selectedMidiInputChannel"
+					value={snap.selectedMidiInputChannel}
+					onChange={handleDeviceChannelChange}
+				>
+					{channelOptions}
+				</select>
+			</div>
+		</>
 	);
 }
 

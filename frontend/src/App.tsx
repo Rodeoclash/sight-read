@@ -1,8 +1,9 @@
 import { buildSampler, playNote } from "@/services/audio";
 import state, {
 	storeNote,
-	setSelectedInput,
+	setSelectedMidiInputId,
 	setMidiEnabled,
+	setSettings,
 } from "@/services/state";
 import { Cog6ToothIcon } from "@heroicons/react/24/solid";
 import React from "react";
@@ -10,24 +11,22 @@ import { subscribe, useSnapshot } from "valtio";
 import { WebMidi } from "webmidi";
 import { render } from "./services/stave";
 
-import MidiInputs from "@/components/MidiInputs";
-
 import "./index.css";
 
 import type * as Tone from "tone";
 import styles from "./App.module.css";
 import Logo from "./components/Logo";
+import Settings from "./components/Settings";
 
 function App() {
 	const el = React.useRef<HTMLDivElement | null>(null);
 	const [startInteraction, setStartInteraction] =
 		React.useState<boolean>(false);
-	const [showSettings, setShowSettings] = React.useState<boolean>(false);
 	const [sampler, setSampler] = React.useState<Tone.Sampler | null>(null);
 	const snap = useSnapshot(state);
 
-	function handleToggleSettings() {
-		setShowSettings(!showSettings);
+	function handleShowSettings() {
+		setSettings(true);
 	}
 
 	async function handleStartInteraction() {
@@ -44,7 +43,7 @@ function App() {
 				setMidiEnabled(true);
 
 				if (WebMidi.inputs[0]) {
-					setSelectedInput(WebMidi.inputs[0]); // default to first midi device
+					setSelectedMidiInputId(WebMidi.inputs[0].id); // default to first midi device
 				}
 			} catch (err) {
 				console.error(err);
@@ -55,12 +54,12 @@ function App() {
 
 	// Web midi listener
 	React.useEffect(() => {
-		if (!snap.selectedInputId || sampler === null) {
+		if (!snap.selectedMidiInputId || sampler === null) {
 			return;
 		}
 
 		const selectedInput = WebMidi.inputs.find((input) => {
-			return input.id === snap.selectedInputId;
+			return input.id === snap.selectedMidiInputId;
 		});
 
 		if (!selectedInput) {
@@ -70,12 +69,13 @@ function App() {
 		selectedInput.addListener(
 			"noteon",
 			(event) => {
+				console.log("=== note on");
 				storeNote(event);
 				playNote(sampler, event);
 			},
 			{ channels: [1] },
 		);
-	}, [snap.selectedInputId, sampler]);
+	}, [snap.selectedMidiInputId, sampler]);
 
 	// Vexflow boot
 	React.useEffect(() => {
@@ -100,7 +100,7 @@ function App() {
 	);
 
 	if (snap.midiEnabled === null) {
-		return <main className={styles.splash}>Determine if midi enabled</main>;
+		return <main className={styles.splash}>Finding midi...</main>;
 	}
 
 	if (snap.midiEnabled === false) {
@@ -120,10 +120,9 @@ function App() {
 		<main className={styles.main}>
 			<header className={styles.header}>
 				<div className={styles.settings}>
-					<button type="button" onClick={handleToggleSettings}>
+					<button type="button" onClick={handleShowSettings}>
 						<Cog6ToothIcon width={24} />
 					</button>
-					{showSettings === true && <MidiInputs />}
 				</div>
 				<Logo />
 			</header>
@@ -131,6 +130,8 @@ function App() {
 			<div className={styles.lesson}>
 				<div ref={el} className={styles.card} />
 			</div>
+
+			{snap.showingSettings === true && <Settings />}
 		</main>
 	);
 }

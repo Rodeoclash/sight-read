@@ -1,5 +1,5 @@
 import { proxy } from "valtio";
-import type { Input, Note, NoteMessageEvent } from "webmidi";
+import type { Note, NoteMessageEvent } from "webmidi";
 import { generateRandomLesson } from "./lessons";
 
 type LessonItem = {
@@ -14,16 +14,24 @@ const state = proxy<{
 	inputNotes: InputNotes;
 	lesson: Lesson;
 	midiEnabled: boolean | null;
-	selectedInputId: null | string;
+	selectedMidiInputId: null | string;
+	selectedMidiInputChannel: string;
+	showingSettings: boolean;
 }>({
 	inputNotes: [],
 	lesson: generateRandomLesson(),
 	midiEnabled: null,
-	selectedInputId: null,
+	selectedMidiInputId: null,
+	selectedMidiInputChannel: "0",
+	showingSettings: false,
 });
 
-export function setSelectedInput(input: Input): void {
-	state.selectedInputId = input.id;
+export function setSelectedMidiInputId(id: string): void {
+	state.selectedMidiInputId = id;
+}
+
+export function setSelectedMidiInputChannel(channel: string): void {
+	state.selectedMidiInputChannel = channel;
 }
 
 export function storeNote(event: NoteMessageEvent): void {
@@ -37,6 +45,10 @@ export function nextLesson(): void {
 
 export function setMidiEnabled(enabled: boolean): void {
 	state.midiEnabled = enabled;
+}
+
+export function setSettings(enabled: boolean): void {
+	state.showingSettings = enabled;
 }
 
 export default state;
