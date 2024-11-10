@@ -1,5 +1,9 @@
 import { buildSampler, playNote } from "@/services/audio";
-import state, { storeNote, setSelectedInput } from "@/services/state";
+import state, {
+	storeNote,
+	setSelectedInput,
+	setMidiEnabled,
+} from "@/services/state";
 import { Cog6ToothIcon } from "@heroicons/react/24/solid";
 import React from "react";
 import { subscribe, useSnapshot } from "valtio";
@@ -12,12 +16,12 @@ import "./index.css";
 
 import type * as Tone from "tone";
 import styles from "./App.module.css";
+import Logo from "./components/Logo";
 
 function App() {
 	const el = React.useRef<HTMLDivElement | null>(null);
 	const [startInteraction, setStartInteraction] =
 		React.useState<boolean>(false);
-	const [midiEnabled, setMidiEnabled] = React.useState<boolean | null>(null);
 	const [showSettings, setShowSettings] = React.useState<boolean>(false);
 	const [sampler, setSampler] = React.useState<Tone.Sampler | null>(null);
 	const snap = useSnapshot(state);
@@ -37,10 +41,13 @@ function App() {
 		(async () => {
 			try {
 				await WebMidi.enable();
-				setSelectedInput(WebMidi.inputs[0]); // default to first midi device
 				setMidiEnabled(true);
+
+				if (WebMidi.inputs[0]) {
+					setSelectedInput(WebMidi.inputs[0]); // default to first midi device
+				}
 			} catch (err) {
-				alert(err);
+				console.error(err);
 				setMidiEnabled(false);
 			}
 		})();
@@ -92,30 +99,39 @@ function App() {
 		[snap],
 	);
 
-	if (midiEnabled === null) {
-		return <p>Determine if midi enabled</p>;
+	if (snap.midiEnabled === null) {
+		return <main className={styles.splash}>Determine if midi enabled</main>;
 	}
 
-	if (midiEnabled === false) {
-		return <p>Midi not enabled</p>;
+	if (snap.midiEnabled === false) {
+		return <main className={styles.splash}>Midi not enabled</main>;
 	}
 
 	if (startInteraction === false) {
 		return (
-			<p>
+			<main className={styles.splash}>
+				<Logo />
 				<input onClick={handleStartInteraction} type="button" value="Start" />
-			</p>
+			</main>
 		);
 	}
 
 	return (
-		<>
-			<div className={styles.settings}>
-				<Cog6ToothIcon width={24} onClick={handleToggleSettings} />
-				{showSettings === true && <MidiInputs />}
+		<main className={styles.main}>
+			<header className={styles.header}>
+				<div className={styles.settings}>
+					<button type="button" onClick={handleToggleSettings}>
+						<Cog6ToothIcon width={24} />
+					</button>
+					{showSettings === true && <MidiInputs />}
+				</div>
+				<Logo />
+			</header>
+
+			<div className={styles.lesson}>
+				<div ref={el} className={styles.card} />
 			</div>
-			<div ref={el} className={styles.card} />
-		</>
+		</main>
 	);
 }
 

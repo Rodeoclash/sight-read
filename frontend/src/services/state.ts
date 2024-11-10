@@ -13,10 +13,12 @@ export type InputNotes = Array<Note>;
 const state = proxy<{
 	inputNotes: InputNotes;
 	lesson: Lesson;
+	midiEnabled: boolean | null;
 	selectedInputId: null | string;
 }>({
 	inputNotes: [],
 	lesson: generateRandomLesson(),
+	midiEnabled: null,
 	selectedInputId: null,
 });
 
@@ -31,6 +33,10 @@ export function storeNote(event: NoteMessageEvent): void {
 export function nextLesson(): void {
 	state.inputNotes = [];
 	state.lesson = generateRandomLesson();
+}
+
+export function setMidiEnabled(enabled: boolean): void {
+	state.midiEnabled = enabled;
 }
 
 export default state;
