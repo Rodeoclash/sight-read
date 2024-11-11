@@ -1,5 +1,4 @@
 import type State from "@/services/state";
-import { nextLesson } from "@/services/state";
 
 import type { useSnapshot } from "valtio";
 import { Vex } from "vexflow";
@@ -7,14 +6,6 @@ import { Vex } from "vexflow";
 const { Factory } = Vex.Flow;
 
 type SnapshotState = ReturnType<typeof useSnapshot<typeof State>>;
-
-function webMidiNoteToLesson(
-	name: string,
-	octave: number,
-	accidental = "",
-): string {
-	return `${name}${accidental}${octave}`;
-}
 
 export function render(el: HTMLDivElement, state: SnapshotState) {
 	// Clear any existing content
@@ -40,33 +31,11 @@ export function render(el: HTMLDivElement, state: SnapshotState) {
 
 	const notes = score.notes(notesToRender);
 
-	// Find how many notes have been correctly played in sequence
-	let correctNotes = 0;
-	for (
-		let i = 0;
-		i < state.inputNotes.length && correctNotes < state.lesson.length;
-		i++
-	) {
-		const inputNote = state.inputNotes[i];
-		const expectedNote = state.lesson[correctNotes];
-
-		if (
-			webMidiNoteToLesson(
-				inputNote.name,
-				inputNote.octave,
-				inputNote.accidental,
-			) === expectedNote.value
-		) {
-			notes[correctNotes].setStyle({
-				fillStyle: "#15803d",
-				strokeStyle: "#15803d",
-			});
-			correctNotes++;
-		}
-	}
-
-	if (correctNotes === state.lesson.length) {
-		nextLesson();
+	for (let i = 0; i < state.lessonCorrectNotes; i++) {
+		notes[i].setStyle({
+			fillStyle: "#15803d",
+			strokeStyle: "#15803d",
+		});
 	}
 
 	system

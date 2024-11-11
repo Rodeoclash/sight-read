@@ -48,3 +48,9 @@ export function playNote(sampler: Tone.Sampler, event: NoteMessageEvent) {
 	const noteName = webMidiNoteToName(note.name, note.octave, note.accidental);
 	sampler.triggerAttack(noteName);
 }
+
+export function stopNote(sampler: Tone.Sampler, event: NoteMessageEvent) {
+	const note = event.note;
+	const noteName = webMidiNoteToName(note.name, note.octave, note.accidental);
+	sampler.triggerRelease(noteName);
+}

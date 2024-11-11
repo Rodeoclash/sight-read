@@ -5,6 +5,7 @@
 		"biomejs",
 		"lefthook",
 		"mkdirp",
+		"noteoff",
 		"noteon",
 		"valtio",
 		"vexflow",

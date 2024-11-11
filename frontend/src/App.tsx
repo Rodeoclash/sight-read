@@ -1,9 +1,10 @@
-import { buildSampler, playNote } from "@/services/audio";
+import { buildSampler, playNote, stopNote } from "@/services/audio";
 import state, {
 	storeNote,
 	setSelectedMidiInputId,
 	setMidiEnabled,
 	setSettings,
+	setCurrentNote,
 } from "@/services/state";
 import { Cog6ToothIcon } from "@heroicons/react/24/solid";
 import React from "react";
@@ -69,13 +70,21 @@ function App() {
 		selectedInput.addListener(
 			"noteon",
 			(event) => {
-				console.log("=== note on");
+				setCurrentNote(event.note);
 				storeNote(event);
 				playNote(sampler, event);
 			},
-			{ channels: [1] },
+			{ channels: [snap.selectedMidiInputChannel] },
 		);
-	}, [snap.selectedMidiInputId, sampler]);
+
+		selectedInput.addListener(
+			"noteoff",
+			(event) => {
+				stopNote(sampler, event);
+			},
+			{ channels: [snap.selectedMidiInputChannel] },
+		);
+	}, [snap.selectedMidiInputId, snap.selectedMidiInputChannel, sampler]);
 
 	// Vexflow boot
 	React.useEffect(() => {

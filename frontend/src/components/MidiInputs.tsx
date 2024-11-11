@@ -35,7 +35,7 @@ function MidiInputs() {
 	const handleDeviceChannelChange = (
 		event: React.ChangeEvent<HTMLSelectElement>,
 	) => {
-		setSelectedMidiInputChannel(event.target.value);
+		setSelectedMidiInputChannel(Number.parseInt(event.target.value));
 	};
 
 	if (deviceOptions.length === 0) {

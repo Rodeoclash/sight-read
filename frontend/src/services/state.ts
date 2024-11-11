@@ -10,32 +10,76 @@ type LessonItem = {
 export type Lesson = Array<LessonItem>;
 export type InputNotes = Array<Note>;
 
+function webMidiNoteToLesson(
+	name: string,
+	octave: number,
+	accidental = "",
+): string {
+	return `${name}${accidental}${octave}`;
+}
+
 const state = proxy<{
+	currentNote: Note | null;
 	inputNotes: InputNotes;
 	lesson: Lesson;
 	midiEnabled: boolean | null;
 	selectedMidiInputId: null | string;
-	selectedMidiInputChannel: string;
+	selectedMidiInputChannel: number;
 	showingSettings: boolean;
+
+	readonly lessonCorrectNotes: number;
 }>({
+	currentNote: null,
 	inputNotes: [],
 	lesson: generateRandomLesson(),
 	midiEnabled: null,
 	selectedMidiInputId: null,
-	selectedMidiInputChannel: "0",
+	selectedMidiInputChannel: 1,
 	showingSettings: false,
+
+	/**
+	 * How many notes are correct in the current lesson
+	 */
+	get lessonCorrectNotes() {
+		let correctNotes = 0;
+
+		for (
+			let i = 0;
+			i < state.inputNotes.length && correctNotes < state.lesson.length;
+			i++
+		) {
+			const inputNote = this.inputNotes[i];
+			const expectedNote = this.lesson[correctNotes];
+
+			if (
+				webMidiNoteToLesson(
+					inputNote.name,
+					inputNote.octave,
+					inputNote.accidental,
+				) === expectedNote.value
+			) {
+				correctNotes++;
+			}
+		}
+
+		return correctNotes;
+	},
 });
 
 export function setSelectedMidiInputId(id: string): void {
 	state.selectedMidiInputId = id;
 }
 
-export function setSelectedMidiInputChannel(channel: string): void {
+export function setSelectedMidiInputChannel(channel: number): void {
 	state.selectedMidiInputChannel = channel;
 }
 
 export function storeNote(event: NoteMessageEvent): void {
 	state.inputNotes.push(event.note);
+
+	if (state.lessonCorrectNotes === state.lesson.length) {
+		nextLesson();
+	}
 }
 
 export function nextLesson(): void {
@@ -49,6 +93,10 @@ export function setMidiEnabled(enabled: boolean): void {
 
 export function setSettings(enabled: boolean): void {
 	state.showingSettings = enabled;
+}
+
+export function setCurrentNote(note: Note | null): void {
+	state.currentNote = note;
 }
 
 export default state;
