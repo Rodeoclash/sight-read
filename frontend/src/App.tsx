@@ -80,6 +80,7 @@ function App() {
 		selectedInput.addListener(
 			"noteoff",
 			(event) => {
+				setCurrentNote(null);
 				stopNote(sampler, event);
 			},
 			{ channels: [snap.selectedMidiInputChannel] },
