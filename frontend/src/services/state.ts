@@ -10,7 +10,7 @@ type LessonItem = {
 export type Lesson = Array<LessonItem>;
 export type InputNotes = Array<Note>;
 
-function webMidiNoteToLesson(
+export function webMidiNoteToLesson(
 	name: string,
 	octave: number,
 	accidental = "",

@@ -1,4 +1,5 @@
 import type State from "@/services/state";
+import { webMidiNoteToLesson } from "@/services/state";
 
 import type { useSnapshot } from "valtio";
 import { Vex } from "vexflow";
@@ -8,6 +9,8 @@ const { Factory } = Vex.Flow;
 type SnapshotState = ReturnType<typeof useSnapshot<typeof State>>;
 
 export function render(el: HTMLDivElement, state: SnapshotState) {
+	const currentNote = state.currentNote;
+
 	// Clear any existing content
 	el.innerHTML = "";
 
@@ -26,7 +29,19 @@ export function render(el: HTMLDivElement, state: SnapshotState) {
 	});
 
 	const notesToRender = state.lesson
-		.map((lessonItem) => `${lessonItem.value}/${lessonItem.duration}`)
+		.map((lessonItem, i) => {
+			if (i === state.lessonCorrectNotes && currentNote) {
+				const playedNote = webMidiNoteToLesson(
+					currentNote.name,
+					currentNote.octave,
+					currentNote.accidental,
+				);
+
+				return `(${lessonItem.value} ${playedNote})/${lessonItem.duration}`;
+			}
+
+			return `${lessonItem.value}/${lessonItem.duration}`;
+		})
 		.join(",");
 
 	const notes = score.notes(notesToRender);
@@ -37,6 +52,8 @@ export function render(el: HTMLDivElement, state: SnapshotState) {
 			strokeStyle: "#15803d",
 		});
 	}
+
+	console.log(notes[0]);
 
 	system
 		.addStave({
