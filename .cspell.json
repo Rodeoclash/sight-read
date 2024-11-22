@@ -7,6 +7,7 @@
 		"mkdirp",
 		"noteoff",
 		"noteon",
+		"Stemmable",
 		"valtio",
 		"vexflow",
 		"webmidi"

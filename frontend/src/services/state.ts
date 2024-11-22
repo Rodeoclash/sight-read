@@ -10,16 +10,8 @@ type LessonItem = {
 export type Lesson = Array<LessonItem>;
 export type InputNotes = Array<Note>;
 
-export function webMidiNoteToLesson(
-	name: string,
-	octave: number,
-	accidental = "",
-): string {
-	return `${name}${accidental}${octave}`;
-}
-
 const state = proxy<{
-	currentNote: Note | null;
+	notesOn: { [key: string]: Note | null };
 	inputNotes: InputNotes;
 	lesson: Lesson;
 	midiEnabled: boolean | null;
@@ -29,7 +21,7 @@ const state = proxy<{
 
 	readonly lessonCorrectNotes: number;
 }>({
-	currentNote: null,
+	notesOn: {},
 	inputNotes: [],
 	lesson: generateRandomLesson(),
 	midiEnabled: null,
@@ -51,13 +43,7 @@ const state = proxy<{
 			const inputNote = this.inputNotes[i];
 			const expectedNote = this.lesson[correctNotes];
 
-			if (
-				webMidiNoteToLesson(
-					inputNote.name,
-					inputNote.octave,
-					inputNote.accidental,
-				) === expectedNote.value
-			) {
+			if (inputNote.identifier === expectedNote.value) {
 				correctNotes++;
 			}
 		}
@@ -95,8 +81,12 @@ export function setSettings(enabled: boolean): void {
 	state.showingSettings = enabled;
 }
 
-export function setCurrentNote(note: Note | null): void {
-	state.currentNote = note;
+export function setNoteOn(note: Note): void {
+	state.notesOn[note.identifier] = note;
+}
+
+export function setNoteOff(note: Note): void {
+	state.notesOn[note.identifier] = null;
 }
 
 export default state;

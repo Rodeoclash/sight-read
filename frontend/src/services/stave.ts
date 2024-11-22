@@ -1,7 +1,6 @@
 import type State from "@/services/state";
-import { webMidiNoteToLesson } from "@/services/state";
-
 import type { useSnapshot } from "valtio";
+import type { EasyScore, StemmableNote } from "vexflow";
 import { Vex } from "vexflow";
 
 const { Factory, Modifier } = Vex.Flow;
@@ -10,13 +9,10 @@ type SnapshotState = ReturnType<typeof useSnapshot<typeof State>>;
 
 // Create a custom modifier that adds a ghost note
 class GhostNoteModifier extends Modifier {
-	private ghostNote: any;
+	private ghostNote: StemmableNote;
 	private readonly ghostStyle = "rgba(156, 163, 175, 1)";
 
-	constructor(
-		noteSpec: string,
-		private score: any,
-	) {
+	constructor(noteSpec: string, score: EasyScore) {
 		super();
 		// Create the ghost note when the modifier is constructed
 		this.ghostNote = score.notes(noteSpec)[0];
@@ -29,17 +25,21 @@ class GhostNoteModifier extends Modifier {
 	}
 
 	draw() {
-		const ctx = this.context;
+		const ctx = this.checkContext();
 		const note = this.note;
 
 		if (!ctx || !note) return;
+
+		const stave = note.getStave();
+
+		if (!stave) return;
 
 		// Save current context state
 		ctx.save();
 
 		// Copy position and context from the parent note
 		this.ghostNote.setContext(ctx);
-		this.ghostNote.setStave(note.getStave());
+		this.ghostNote.setStave(stave);
 
 		// Important: Set up the tick context
 		if (note.getTickContext()) {
@@ -60,8 +60,6 @@ class GhostNoteModifier extends Modifier {
 }
 
 export function render(el: HTMLDivElement, state: SnapshotState) {
-	const currentNote = state.currentNote;
-
 	// Clear any existing content
 	el.innerHTML = "";
 
@@ -94,16 +92,12 @@ export function render(el: HTMLDivElement, state: SnapshotState) {
 		});
 	}
 
-	if (currentNote) {
-		const playedNote = webMidiNoteToLesson(
-			currentNote.name,
-			currentNote.octave,
-			currentNote.accidental,
-		);
-
-		notes[state.lessonCorrectNotes].addModifier(
-			new GhostNoteModifier(`${playedNote}/q`, score),
-		);
+	for (const [_noteIdentifier, note] of Object.entries(state.notesOn)) {
+		if (note) {
+			notes[state.lessonCorrectNotes].addModifier(
+				new GhostNoteModifier(`${note.identifier}/q`, score),
+			);
+		}
 	}
 
 	system

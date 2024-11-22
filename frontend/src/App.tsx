@@ -4,7 +4,8 @@ import state, {
 	setSelectedMidiInputId,
 	setMidiEnabled,
 	setSettings,
-	setCurrentNote,
+	setNoteOn,
+	setNoteOff,
 } from "@/services/state";
 import { Cog6ToothIcon } from "@heroicons/react/24/solid";
 import React from "react";
@@ -70,7 +71,7 @@ function App() {
 		selectedInput.addListener(
 			"noteon",
 			(event) => {
-				setCurrentNote(event.note);
+				setNoteOn(event.note);
 				storeNote(event);
 				playNote(sampler, event);
 			},
@@ -80,7 +81,7 @@ function App() {
 		selectedInput.addListener(
 			"noteoff",
 			(event) => {
-				setCurrentNote(null);
+				setNoteOff(event.note);
 				stopNote(sampler, event);
 			},
 			{ channels: [snap.selectedMidiInputChannel] },
