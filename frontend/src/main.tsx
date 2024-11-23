@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/react";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.tsx";
@@ -11,5 +12,6 @@ if (rootEl === null) {
 ReactDOM.createRoot(rootEl).render(
   <React.StrictMode>
     <App />
+    <Analytics />
   </React.StrictMode>,
 );
