@@ -1,7 +1,7 @@
 export function webMidiNoteToName(
-	name: string,
-	octave: number,
-	accidental = "",
+  name: string,
+  octave: number,
+  accidental = "",
 ): string {
-	return `${name}${accidental}${octave}`;
+  return `${name}${accidental}${octave}`;
 }

@@ -1,15 +1,15 @@
 {
-	"version": "0.2",
-	"language": "en",
-	"words": [
-		"biomejs",
-		"lefthook",
-		"mkdirp",
-		"noteoff",
-		"noteon",
-		"Stemmable",
-		"valtio",
-		"vexflow",
-		"webmidi"
-	]
+  "version": "0.2",
+  "language": "en",
+  "words": [
+    "biomejs",
+    "lefthook",
+    "mkdirp",
+    "noteoff",
+    "noteon",
+    "Stemmable",
+    "valtio",
+    "vexflow",
+    "webmidi"
+  ]
 }
