@@ -11,22 +11,23 @@ export type Lesson = Array<LessonItem>;
 export type InputNotes = Array<Note>;
 
 const state = proxy<{
-	notesOn: { [key: string]: Note | null };
+	completedLessons: number;
 	inputNotes: InputNotes;
 	lesson: Lesson;
 	midiEnabled: boolean | null;
-	selectedMidiInputId: null | string;
-	selectedMidiInputChannel: number;
-	showingSettings: boolean;
-
+	notesOn: { [key: string]: Note | null };
 	readonly lessonCorrectNotes: number;
+	selectedMidiInputChannel: number;
+	selectedMidiInputId: null | string;
+	showingSettings: boolean;
 }>({
-	notesOn: {},
+	completedLessons: 0,
 	inputNotes: [],
 	lesson: generateRandomLesson(),
 	midiEnabled: null,
-	selectedMidiInputId: null,
+	notesOn: {},
 	selectedMidiInputChannel: 1,
+	selectedMidiInputId: null,
 	showingSettings: false,
 
 	/**
@@ -71,6 +72,7 @@ export function storeNote(event: NoteMessageEvent): void {
 export function nextLesson(): void {
 	state.inputNotes = [];
 	state.lesson = generateRandomLesson();
+	state.completedLessons = state.completedLessons + 1;
 }
 
 export function setMidiEnabled(enabled: boolean): void {

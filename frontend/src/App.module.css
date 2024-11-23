@@ -46,3 +46,8 @@
   align-items: center;
   justify-content: center;
 }
+
+.sessionInfo {
+  margin-top: 1rem;
+  text-align: center;
+}

@@ -139,7 +139,12 @@ function App() {
 			</header>
 
 			<div className={styles.lesson}>
-				<div ref={el} className={styles.card} />
+				<div>
+					<div ref={el} className={styles.card} />
+					<div className={styles.sessionInfo}>
+						Completed: {snap.completedLessons}
+					</div>
+				</div>
 			</div>
 
 			{snap.showingSettings === true && <Settings />}
