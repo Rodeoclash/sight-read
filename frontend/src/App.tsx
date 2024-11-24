@@ -3,9 +3,10 @@ import state, {
   storeNote,
   setSelectedMidiInputId,
   setMidiEnabled,
-  setSettings,
+  setShowingSettings,
   setNoteOn,
   setNoteOff,
+  nextLesson,
 } from "@/services/state";
 import { Cog6ToothIcon } from "@heroicons/react/24/solid";
 import React from "react";
@@ -28,7 +29,7 @@ function App() {
   const snap = useSnapshot(state);
 
   function handleShowSettings() {
-    setSettings(true);
+    setShowingSettings(true);
   }
 
   async function handleStartInteraction() {
@@ -98,17 +99,28 @@ function App() {
   }, [snap, startInteraction]);
 
   // Vexflow update
-  React.useEffect(
-    () =>
-      subscribe(state.lesson, () => {
-        if (el.current === null) {
-          return;
-        }
+  React.useEffect(() => {
+    if (state.lesson === null) {
+      return;
+    }
 
-        render(el.current, snap);
-      }),
-    [snap],
-  );
+    subscribe(state.lesson, () => {
+      if (el.current === null) {
+        return;
+      }
+
+      render(el.current, snap);
+    });
+  }, [snap]);
+
+  // Build first lesson
+  React.useEffect(() => {
+    if (state.lesson !== null) {
+      return;
+    }
+
+    nextLesson();
+  }, []);
 
   if (snap.midiEnabled === null) {
     return <main className={styles.splash}>Finding midi...</main>;
@@ -125,6 +137,10 @@ function App() {
         <input onClick={handleStartInteraction} type="button" value="Start" />
       </main>
     );
+  }
+
+  if (snap.lesson === null) {
+    return <main className={styles.splash}>Waiting to generate lesson</main>;
   }
 
   return (

@@ -13,7 +13,8 @@ export type InputNotes = Array<Note>;
 const state = proxy<{
   completedLessons: number;
   inputNotes: InputNotes;
-  lesson: Lesson;
+  lesson: Lesson | null;
+  middleCOctave: number;
   midiEnabled: boolean | null;
   notesOn: { [key: string]: Note | null };
   readonly lessonCorrectNotes: number;
@@ -23,7 +24,8 @@ const state = proxy<{
 }>({
   completedLessons: 0,
   inputNotes: [],
-  lesson: generateRandomLesson(),
+  lesson: null,
+  middleCOctave: 4,
   midiEnabled: null,
   notesOn: {},
   selectedMidiInputChannel: 1,
@@ -34,11 +36,15 @@ const state = proxy<{
    * How many notes are correct in the current lesson
    */
   get lessonCorrectNotes() {
+    if (this.lesson === null) {
+      return 0;
+    }
+
     let correctNotes = 0;
 
     for (
       let i = 0;
-      i < state.inputNotes.length && correctNotes < state.lesson.length;
+      i < state.inputNotes.length && correctNotes < this.lesson.length;
       i++
     ) {
       const inputNote = this.inputNotes[i];
@@ -64,14 +70,22 @@ export function setSelectedMidiInputChannel(channel: number): void {
 export function storeNote(event: NoteMessageEvent): void {
   state.inputNotes.push(event.note);
 
+  if (state.lesson === null) {
+    return;
+  }
+
   if (state.lessonCorrectNotes === state.lesson.length) {
     nextLesson();
   }
 }
 
-export function nextLesson(): void {
+export function resetLesson(): void {
   state.inputNotes = [];
-  state.lesson = generateRandomLesson();
+  state.lesson = generateRandomLesson(state);
+}
+
+export function nextLesson(): void {
+  resetLesson();
   state.completedLessons = state.completedLessons + 1;
 }
 
@@ -79,8 +93,12 @@ export function setMidiEnabled(enabled: boolean): void {
   state.midiEnabled = enabled;
 }
 
-export function setSettings(enabled: boolean): void {
+export function setShowingSettings(enabled: boolean): void {
   state.showingSettings = enabled;
+}
+
+export function setMiddleCOctave(octave: number): void {
+  state.middleCOctave = octave;
 }
 
 export function setNoteOn(note: Note): void {

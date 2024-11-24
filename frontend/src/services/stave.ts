@@ -60,6 +60,10 @@ class GhostNoteModifier extends Modifier {
 }
 
 export function render(el: HTMLDivElement, state: SnapshotState) {
+  if (state.lesson === null) {
+    return;
+  }
+
   // Clear any existing content
   el.innerHTML = "";
 
